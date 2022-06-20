@@ -10,8 +10,6 @@ interface InjeccionDependencias {
     fun enviarDatos(dato: Dato): Boolean
 
 }
-
-    val negro = "\u001B[30m"
     val rojo = "\u001B[31m"
     val verde = "\u001B[32m"
     val amarillo = "\u001B[33m"
@@ -38,18 +36,17 @@ class ServicioBaseDatos : InjeccionDependencias  {
         return if (lista.contains(id.toString())){
             println(verde+"El id $id existe, aquí tiene su información"+blanco)
 
-            return Dato(id, listaContactos[lista.indexOf(id.toString())])
-        }
-        else{
+            Dato(id, listaContactos[lista.indexOf(id.toString())])
+        } else{
             println(rojo+"No existe el id $id"+blanco)
-            return null
+            null
         }
 
 
     }
 
     override fun obtenerDatos(): List<Dato> {
-        var obtencion_datos = mutableListOf<Dato>()
+        val obtencion_datos = mutableListOf<Dato>()
         println(purpura+"Listado de Datos:"+blanco)
         for (key in bd.keys.sorted()) {
             obtencion_datos.add(Dato(key, bd[key]!!))
@@ -87,7 +84,6 @@ class ServicioBaseDatos : InjeccionDependencias  {
 }
 
 class Dato(id: Int, texto: String) {
-    //var datos2 = mutableMapOf<Int,String>(Pair(id,texto))
     var id = id
     var texto = texto
 }
@@ -107,7 +103,7 @@ class GestionNegocio (var fusion: InjeccionDependencias){
      * @return El dato obtenido, null si no lo encuentra
      */
     fun obtenerDatoById(id:Int): Dato? {
-        return fusion.obtenerDatoById(id);
+        return fusion.obtenerDatoById(id)
     }
 
     /**
@@ -116,7 +112,7 @@ class GestionNegocio (var fusion: InjeccionDependencias){
      * @return La lista de todos los datos. Lista vacía si no existe nada.
      */
     fun obtenerDatos(): List<Dato> {
-        return fusion.obtenerDatos();
+        return fusion.obtenerDatos()
     }
 
     /**
@@ -214,7 +210,7 @@ class GestionNegocio (var fusion: InjeccionDependencias){
  *
  * @param args
  */
-fun main(args: Array<String>) {
+fun main() {
 
     val gestionNegocio = GestionNegocio(ServicioBaseDatos())
     println(verde+"Servicio normal")
