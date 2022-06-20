@@ -1,82 +1,103 @@
 
+interface InjeccionDependencias {
 
-class ServicioBaseDatos {
+    fun obtenerDatoById(id:Int): Dato?
 
-    /** simula una BD mediante un map*/
-    private val bd = mutableMapOf<Int, String>(
-        1 to "uno",
-        33 to "treinta y tres",
-        0 to "cero",
-        44 to "cuarenta y cuatro"
-    )
+    fun obtenerDatos(): List<Dato>
 
-    fun obtenerDatoById(id:Int): Dato? {
+    fun eliminaDato(id:Int): Boolean
+
+    fun enviarDatos(dato: Dato): Boolean
+
+}
+
+    val negro = "\u001B[30m"
+    val rojo = "\u001B[31m"
+    val verde = "\u001B[32m"
+    val amarillo = "\u001B[33m"
+    val azul = "\u001B[34m"
+    val purpura = "\u001B[35m"
+    val cian = "\u001B[36m"
+    val blanco = "\u001B[37m"
+
+
+class ServicioBaseDatos : InjeccionDependencias  {
+
+    private val c = DB()
+    private val bd = c.selectAll()
+
+    override fun obtenerDatoById(id:Int): Dato? {
         val listaContactos : MutableList<String> = mutableListOf()
-        val listaTelefonos : MutableList<String> = mutableListOf()
 
         for (key in bd.keys.sorted()){
             listaContactos.add(key.toString())
-            listaTelefonos.add(bd[key].toString())
+            listaContactos.add(bd[key].toString())
         }
 
-        //Falta Identificar que la primera letra la identifique tambien como mayuscula.
         val lista = listaContactos.toList()
-        println(lista.filter { it.contains(id.toString()) })
-        var cont = 0
+        return if (lista.contains(id.toString())){
+            println(verde+"El id $id existe, aquí tiene su información"+blanco)
 
-        return Dato(cont, lista.filter { it.contains(id.toString()) }.toString())
+            return Dato(id, listaContactos[lista.indexOf(id.toString())])
+        }
+        else{
+            println(rojo+"No existe el id $id"+blanco)
+            return null
+        }
+
+
     }
 
-    fun obtenerDatos(): List<Dato> {
+    override fun obtenerDatos(): List<Dato> {
         var obtencion_datos = mutableListOf<Dato>()
-        println("Listado de Datos:")
+        println(purpura+"Listado de Datos:"+blanco)
         for (key in bd.keys.sorted()) {
-            var a = bd[key]
-            //obtencion_datos.add( key, a) //Aqui me he bloqueado pero la cosa es pasarle el id y luego el texto, lo que
-            // pasa que me estoy rayando porque me pide un int y un tipo dato y aunque haga un intento con un numero y
-            // una letra creado a mano no me lo pilla, pero la esencia es pillar el int y el texto para mandarlo
-            println(bd[key])
+            obtencion_datos.add(Dato(key, bd[key]!!))
+            println(azul+"${key} $blanco- $cian${bd[key]}"+blanco)
+
         }
-        //return consultaBDordenada
 
         return obtencion_datos.toList()
     }
 
-    fun eliminaDato(id:Int): Boolean {
+    override fun eliminaDato(id:Int): Boolean {
         return if (bd.containsKey(id)) {
-            println("Se ha eliminado el id $id")
-            bd.keys.remove(id)
+            println(verde+"Se ha eliminado el id $id correctamente"+blanco)
+            bd.remove(id)
             true
         }else{
+            println(rojo+"No existe el id $id"+blanco)
             false
         }
     }
 
-    fun enviarDatos(dato: Dato): Boolean {
-        //Para hacerlo mas rapido he pasado el obejto direcatmente
-        println("Se ha enviado el dato $dato")
-        return dato!=null
+    override fun enviarDatos(dato: Dato): Boolean {
+
+        if (bd.containsKey(dato.id)) {
+            println(rojo+"El id ${dato.id} ya existe"+blanco)
+            return false
+        }else{
+            bd[dato.id] = dato.texto
+            println(verde+"Se ha añadido el id ${dato.id}"+blanco)
+            return true
+        }
+
     }
 
 }
 
 class Dato(id: Int, texto: String) {
-    var datos2 = mutableMapOf<Int,String>(
-        Pair(id,texto)
-    )
-
+    //var datos2 = mutableMapOf<Int,String>(Pair(id,texto))
+    var id = id
+    var texto = texto
 }
 
-class Dato2(dato: MutableMap<Int,String>){
-
-}
-
-class GestionNegocio {
+class GestionNegocio (var fusion: InjeccionDependencias){
 
     /**
      * Servicio de acceso a datos
      */
-    private val servicioAccesoDatos = ServicioBaseDatos()
+    //private val servicioAccesoDatos = ServicioBaseDatos()
     //private val servicioAccesoDatosBD = ServicioAccesoDatosAPI()
 
     /**
@@ -86,7 +107,7 @@ class GestionNegocio {
      * @return El dato obtenido, null si no lo encuentra
      */
     fun obtenerDatoById(id:Int): Dato? {
-        return servicioAccesoDatos.obtenerDatoById(id);
+        return fusion.obtenerDatoById(id);
     }
 
     /**
@@ -95,7 +116,7 @@ class GestionNegocio {
      * @return La lista de todos los datos. Lista vacía si no existe nada.
      */
     fun obtenerDatos(): List<Dato> {
-        return servicioAccesoDatos.obtenerDatos();
+        return fusion.obtenerDatos();
     }
 
     /**
@@ -105,7 +126,7 @@ class GestionNegocio {
      * @return true si existia y se elimino. False en caso contrario
      */
     fun eliminaDato(id:Int): Boolean {
-        return servicioAccesoDatos.eliminaDato(id)
+        return fusion.eliminaDato(id)
     }
 
     /**
@@ -115,19 +136,101 @@ class GestionNegocio {
      * @return true si fue una inserción, false si fue una actualización
      */
     fun enviarDatos(dato:Dato) : Boolean {
-        return servicioAccesoDatos.enviarDatos(dato)
+        return fusion.enviarDatos(dato)
     }
 }
+    class DB(){
+        /** simula una BD mediante un map*/
+        private val bd = mutableMapOf<Int, String>(
+            1 to "uno",
+            33 to "treinta y tres",
+            0 to "cero",
+            44 to "cuarenta y cuatro"
+        )
+        fun selectAll(): MutableMap<Int, String>{
+            return bd
+        }
+    }
+    class ServicioAccesoDatosAPI : InjeccionDependencias {
 
+        private val a = DB()
+        private val bd = a.selectAll()
+
+        private val servicioAPI_String : MutableList<String> = mutableListOf()
+        private val servicioAPI_Dato : MutableList<Dato> = mutableListOf()
+
+        override fun obtenerDatoById(id: Int): Dato? {
+            for (key in bd.keys.sorted()){
+                servicioAPI_String.add(key.toString())
+                servicioAPI_String.add(bd[key].toString())
+            }
+
+            val lista = servicioAPI_String.toList()
+            return if (lista.contains(id.toString())){
+                println(cian+"El id $id existe, aquí tiene su información"+blanco)
+
+                return Dato(id, servicioAPI_String[lista.indexOf(id.toString())])
+            }
+            else{
+                println(amarillo+"No existe el id $id"+blanco)
+                return null
+            }
+        }
+
+        override fun obtenerDatos(): List<Dato> {
+
+            println(azul + "Listado de Datos:" + blanco)
+            for (key in bd.keys.sorted()) {
+                servicioAPI_Dato.add(Dato(key, bd[key]!!))
+                println(rojo + "${key} $blanco- $verde${bd[key]}" + blanco)
+            }
+            return servicioAPI_Dato.toList()
+        }
+
+        override fun eliminaDato(id: Int): Boolean {
+            return if (bd.containsKey(id)) {
+                println(cian+"Se ha eliminado el id $id correctamente"+blanco)
+                bd.remove(id)
+                true
+            }else{
+                println(amarillo+"No existe el id $id"+blanco)
+                false
+            }
+        }
+
+        override fun enviarDatos(dato: Dato): Boolean {
+            if (bd.containsKey(dato.id)) {
+                println(amarillo+"El id ${dato.id} ya existe"+blanco)
+                return false
+            }else{
+                bd[dato.id] = dato.texto
+                println(cian+"Se ha añadido el id ${dato.id}"+blanco)
+                return true
+            }
+        }
+    }
 /**
  * Main Prueba del código
  *
  * @param args
  */
 fun main(args: Array<String>) {
-    val gestionNegocio = GestionNegocio()
-    gestionNegocio.enviarDatos(Dato(50, "Cincuenta"))
-    gestionNegocio.enviarDatos(Dato(50, "Cincuenta y uno"))
-    gestionNegocio.eliminaDato(0)
+
+    val gestionNegocio = GestionNegocio(ServicioBaseDatos())
+    println(verde+"Servicio normal")
+    println(gestionNegocio.obtenerDatoById(1))
+    println(gestionNegocio.obtenerDatoById(2))
+    println(gestionNegocio.enviarDatos(Dato(50, "Cincuenta")))
+    println(gestionNegocio.enviarDatos(Dato(50, "Cincuenta y uno")))
+    println(gestionNegocio.eliminaDato(0))
+    println(gestionNegocio.obtenerDatos())
+    println("\n\n\n")
+    println("Servicio API optimizado")
+    gestionNegocio.fusion = ServicioAccesoDatosAPI()
+    println(gestionNegocio.obtenerDatoById(1))
+    println(gestionNegocio.obtenerDatoById(2))
+    println(gestionNegocio.enviarDatos(Dato(50, "Cincuenta")))
+    println(gestionNegocio.enviarDatos(Dato(50, "Cincuenta y uno")))
+    println(gestionNegocio.eliminaDato(0))
     println(gestionNegocio.obtenerDatos())
 }
